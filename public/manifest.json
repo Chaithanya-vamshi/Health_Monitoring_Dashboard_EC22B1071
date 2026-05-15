@@ -1,0 +1,26 @@
+{
+  "id": "ec22b1071-health-hub",
+  "name": "EC22B1071 Health Dashboard",
+  "short_name": "Health Hub",
+  "description": "Real-time biometric monitoring and pulse tracking system.",
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/google/material-design-icons/master/png/action/favorite/materialicons/192dp/2x/baseline_favorite_black_48dp.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/google/material-design-icons/master/png/action/favorite/materialicons/512dp/2x/baseline_favorite_black_48dp.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#ef4444",
+  "orientation": "portrait",
+  "scope": "/"
+}

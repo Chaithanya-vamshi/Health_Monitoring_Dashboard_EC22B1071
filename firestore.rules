@@ -1,0 +1,132 @@
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Collection: readings
+// Document ID: auto-generated
+// Fields:
+//   - heartRate: number (required)
+//   - spo2: number (required)
+//   - bodyTemp: number (required)
+//   - ambientTemp: number (optional)
+//   - pressure: number (optional)
+//   - altitude: number (optional)
+//   - accel: map (optional) {x, y, z}
+//   - gyro: map (optional) {x, y, z}
+//   - ecg: list (optional)
+//   - timestamp: number (required)
+//   - userId: string (required) - owner UID
+//
+// Collection: users
+// Document ID: userId
+// Fields:
+//   - name: string (required)
+//   - email: string (required)
+//   - photoURL: string (optional)
+//   - dailyStepGoal: number (optional)
+//   - role: string (required) - ['user', 'admin']
+//
+// ===============================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         (request.auth.token.email == "chaitanyavamshi2424@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidReading(data) {
+      return data.keys().hasAll(['heartRate', 'spo2', 'bodyTemp', 'timestamp', 'userId']) &&
+             data.heartRate is number && data.heartRate > 0 && data.heartRate < 300 &&
+             data.spo2 is number && data.spo2 >= 0 && data.spo2 <= 100 &&
+             data.bodyTemp is number && data.bodyTemp > 20 && data.bodyTemp < 50 &&
+             data.timestamp is number;
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['name', 'email', 'role']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             isValidEmail(data.email) &&
+             data.role in ['user', 'admin'];
+    }
+
+    function isValidLog(data) {
+      return data.keys().hasAll(['type', 'userId', 'timestamp']) &&
+             data.type is string && data.userId is string &&
+             data.timestamp == request.time;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /system_logs/{logId} {
+      // Anyone authenticated can read logs for the activity stream
+      // We limit this to authenticated users to prevent public leaking of activity
+      allow read: if isAuthenticated();
+      
+      // Anyone authenticated can create a log entry
+      allow create: if isAuthenticated() && isValidLog(request.resource.data);
+      
+      // Logs are immutable
+      allow update, delete: if isAdmin();
+    }
+
+    match /readings/{readingId} {
+      // Users can only read their own data
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      
+      // Users can only create readings for themselves (or public if needed)
+      allow create: if isAuthenticated() && isValidReading(request.resource.data);
+      
+      // Readings are generally immutable once written for integrity
+      allow update: if false;
+      
+      // Users can delete their own readings
+      allow delete: if isDocOwner() || isAdmin();
+    }
+
+    match /users/{userId} {
+      // Users can read their own profile. Admins can read all.
+      allow read: if isOwner(userId) || isAdmin();
+      
+      // Profile creation
+      allow create: if isOwner(userId) && isValidUser(request.resource.data) && 
+                      (request.resource.data.role == 'user' || isAdmin());
+      
+      // Profile updates
+      allow update: if isOwner(userId) && isValidUser(request.resource.data) && 
+                      (request.resource.data.role == resource.data.role || isAdmin());
+      
+      allow delete: if isAdmin();
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

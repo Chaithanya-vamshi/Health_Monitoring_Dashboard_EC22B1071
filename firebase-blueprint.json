@@ -1,0 +1,77 @@
+{
+  "entities": {
+    "SensorReading": {
+      "title": "Sensor Reading",
+      "description": "A single point of sensor data from the ESP32 smartwatch.",
+      "type": "object",
+      "properties": {
+        "heartRate": { "type": "number", "description": "Heart rate in BPM" },
+        "spo2": { "type": "number", "description": "Blood oxygen saturation percentage" },
+        "bodyTemp": { "type": "number", "description": "Body temperature in Celsius" },
+        "ambientTemp": { "type": "number", "description": "Ambient temperature in Celsius" },
+        "pressure": { "type": "number", "description": "Atmospheric pressure in hPa" },
+        "altitude": { "type": "number", "description": "Altitude in meters" },
+        "accel": {
+          "type": "object",
+          "properties": {
+            "x": { "type": "number" },
+            "y": { "type": "number" },
+            "z": { "type": "number" }
+          }
+        },
+        "gyro": {
+          "type": "object",
+          "properties": {
+            "x": { "type": "number" },
+            "y": { "type": "number" },
+            "z": { "type": "number" }
+          }
+        },
+        "ecg": { "type": "array", "items": { "type": "number" }, "description": "Array of ECG signal values" },
+        "timestamp": { "type": "number", "description": "Unix timestamp of the reading" },
+        "userId": { "type": "string", "description": "The UID of the user this data belongs to" }
+      },
+      "required": ["heartRate", "spo2", "bodyTemp", "timestamp", "userId"]
+    },
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Public and private user profile information.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "dailyStepGoal": { "type": "number" },
+        "role": { "type": "string", "enum": ["user", "admin"] }
+      },
+      "required": ["name", "email", "role"]
+    },
+    "SystemLog": {
+      "title": "System Log",
+      "description": "Log entry for system activity stream.",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string" },
+        "userId": { "type": "string" },
+        "email": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "targetUid": { "type": "string" }
+      },
+      "required": ["type", "userId", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/readings/{readingId}": {
+      "schema": "SensorReading",
+      "description": "Collection of real-time sensor readings."
+    },
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile documents."
+    },
+    "/system_logs/{logId}": {
+      "schema": "SystemLog",
+      "description": "Real-time system activity logs."
+    }
+  }
+}

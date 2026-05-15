@@ -1,0 +1,5 @@
+{
+  "name": "EC22B1071 Health Hub",
+  "description": "A high-performance health monitoring dashboard for ESP32-based wearable smartwatches, featuring real-time biometric data and environmental analytics.",
+  "requestFramePermissions": []
+}
